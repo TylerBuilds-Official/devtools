@@ -286,24 +286,7 @@ import pytest
 '''
 
 
-PYPROJECT_ENGINE: str = '''\
-[build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "REPLACE_ME"
-version = "0.1.0"
-description = ""
-requires-python = ">=3.11"
-dependencies = []
-
-[tool.setuptools.packages.find]
-where = ["."]
-'''
-
-
-PYPROJECT_PIP: str = '''\
+PYPROJECT_TEMPLATE: str = '''\
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"

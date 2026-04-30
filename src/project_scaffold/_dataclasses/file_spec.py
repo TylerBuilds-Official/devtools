@@ -7,3 +7,4 @@ class FileSpec:
 
     relative_path: str
     content: str = ''
+    at_root: bool = False

@@ -27,7 +27,9 @@ The tool requires the target directory to already exist (safer than
 auto-creating). It will refuse to overwrite any file that already exists at the
 scaffold destination.
 
-Preset names are case-insensitive on input.
+Preset names are case-insensitive on input. **`src/` layout is the default for
+all presets.** Configs (`.gitignore`, `pyproject.toml`) always live at project
+root regardless.
 
 #### Presets
 
@@ -42,7 +44,8 @@ Preset names are case-insensitive on input.
 
 #### Flags
 
-- `--src` — use `src/` layout. Only valid for `ENGINE` (`PIP` enforces it).
+- `--no-src` — opt out of `src/` layout; lay code at project root instead.
+  `PIP` rejects this flag.
 - `--top-level-meta` — place `dataclasses/` and `errors/` at the project root
   with no underscore prefix, instead of `_dataclasses/` / `_errors/` nested in
   modular dirs.
@@ -50,19 +53,19 @@ Preset names are case-insensitive on input.
 #### Examples
 
 ```bash
-# MCP server (flat layout, _dataclasses/ and _errors/ at root)
+# Default — code under src/, configs at root
 project-scaffold MCP ./my-mcp
 
-# Engine with src/ layout
-project-scaffold ENGINE ./classifier --src
+# Opt out of src/
+project-scaffold ENGINE ./classifier --no-src
 
-# API with meta dirs lifted to root
+# Lift meta dirs to project root with no underscore prefix
 project-scaffold API ./my-api --top-level-meta
 ```
 
 #### Adding a preset
 
 Edit `src/project_scaffold/directory_mappings.py`. Each preset is a `Preset`
-dataclass declaring its directories, files (with content from
-`templates/examples.py`), and src-layout support. The builder handles path
-resolution and flag transforms.
+dataclass declaring its `directories` (under `src/`), `root_directories`
+(always at root), and `files` (with `at_root=True` for configs). The builder
+handles path resolution and flag transforms.

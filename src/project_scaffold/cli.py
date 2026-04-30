@@ -2,10 +2,11 @@
 
 Usage:
     project-scaffold MCP ./my-mcp-server
-    project-scaffold ENGINE ./classifier --src
+    project-scaffold ENGINE ./classifier --no-src
     project-scaffold API ./my-api --top-level-meta
 
-Preset names are case-insensitive on input.
+Preset names are case-insensitive on input. src/ layout is the default for all
+presets — pass --no-src to opt out (PIP enforces src/ and rejects the flag).
 """
 
 import argparse
@@ -27,7 +28,7 @@ def main(argv: list[str] | None = None) -> int:
         plan = scaffold(
             preset_name     = args.preset,
             target_path     = Path(args.path).resolve(),
-            use_src         = args.src,
+            use_src         = not args.no_src,
             top_level_meta  = args.top_level_meta,
         )
     except ScaffoldError as e:
@@ -61,9 +62,10 @@ def _build_parser() -> argparse.ArgumentParser:
         help    = 'target project root (must already exist)',
     )
     parser.add_argument(
-        '--src',
+        '--no-src',
         action  = 'store_true',
-        help    = 'use src/ layout (ENGINE only — PIP enforces it)',
+        dest    = 'no_src',
+        help    = 'lay code at project root instead of under src/ (PIP not supported)',
     )
     parser.add_argument(
         '--top-level-meta',

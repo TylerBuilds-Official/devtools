@@ -5,6 +5,10 @@ Pipeline:
 
 The plan is a pure data structure of absolute paths, which makes the tool
 easy to test and trivial to extend with `--dry-run` later.
+
+Default behavior: src/ is active. Code (preset.directories + non-at_root files)
+gets prefixed with `src/`. Configs (`at_root=True`) and `root_directories` stay
+at project root regardless.
 """
 
 from pathlib import Path
@@ -24,7 +28,7 @@ META_DIRS = (('_dataclasses', 'dataclasses'), ('_errors', 'errors'))
 def scaffold(
         preset_name: str,
         target_path: Path,
-        use_src: bool = False,
+        use_src: bool = True,
         top_level_meta: bool = False ) -> ScaffoldPlan:
     """Generate and execute a scaffold plan for the given preset"""
 
@@ -57,8 +61,8 @@ def _validate_target(target_path: Path) -> None:
 
 
 def _validate_flags(preset: Preset, use_src: bool) -> None:
-    if use_src and not preset.supports_src_layout:
-        raise InvalidFlagError(f"preset '{preset.name}' does not support --src layout")
+    if not use_src and preset.requires_src_layout:
+        raise InvalidFlagError(f"preset '{preset.name}' requires src/ layout (cannot disable)")
 
 
 def _build_plan(
@@ -68,18 +72,18 @@ def _build_plan(
         top_level_meta: bool ) -> ScaffoldPlan:
     """Resolve preset templates into absolute paths"""
 
-    inner_name      = target_path.name
-    src_active      = preset.requires_src_layout or (use_src and preset.supports_src_layout)
-
-    plan_dirs       = []
-    plan_files      = []
+    plan_dirs   = []
+    plan_files  = []
 
     for relative in preset.directories:
-        resolved = _resolve_path(relative, inner_name, src_active, top_level_meta)
+        resolved = _resolve_path(relative, use_src, top_level_meta, at_root=False)
         plan_dirs.append(target_path / resolved)
 
+    for relative in preset.root_directories:
+        plan_dirs.append(target_path / relative)
+
     for spec in preset.files:
-        resolved = _resolve_path(spec.relative_path, inner_name, src_active, top_level_meta)
+        resolved = _resolve_path(spec.relative_path, use_src, top_level_meta, spec.at_root)
         plan_files.append((target_path / resolved, spec.content))
 
     return ScaffoldPlan(
@@ -91,26 +95,29 @@ def _build_plan(
 
 def _resolve_path(
         path: str,
-        inner_name: str,
-        src_active: bool,
-        top_level_meta: bool ) -> str:
-    """Apply path-level transforms in order: inner sub, src prepend, meta lift"""
+        use_src: bool,
+        top_level_meta: bool,
+        at_root: bool ) -> str:
+    """Resolve a relative preset path to its final target-relative path"""
 
-    out = path.replace('{inner}', inner_name)
-
-    if src_active and (out == inner_name or out.startswith(f'{inner_name}/')):
-        out = f'src/{out}'
+    if at_root:
+        return path
 
     if top_level_meta:
-        out = _apply_top_level_meta(out)
+        transformed = _apply_top_level_meta(path)
+        if transformed != path:
+            return transformed
 
-    return out
+    if use_src:
+        return f'src/{path}'
+
+    return path
 
 
 def _apply_top_level_meta(path: str) -> str:
     """Lift _dataclasses / _errors to project root, drop underscore prefix.
 
-    e.g.  some/inner/_dataclasses/foo.py  ->  dataclasses/foo.py
+    e.g.  api/_dataclasses/foo.py  ->  dataclasses/foo.py
     """
 
     for old, new in META_DIRS:

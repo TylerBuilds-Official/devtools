@@ -1,9 +1,14 @@
 """Project type → preset mapping.
 
-Each preset declares the directories and files that make up a standard scaffold
-for that project type. Path strings may use the `{inner}` placeholder, which the
-builder resolves to the basename of the target path (i.e. the project name as
-derived from the path you point at).
+Conventions:
+- All code lives under `src/` by default. Pass `--no-src` to opt out per-call
+  (PIP enforces src/ and rejects the flag).
+- Configs (`.gitignore`, `pyproject.toml`, etc.) always live at the project
+  root via `at_root=True` on the FileSpec.
+- Empty placeholder dirs go in `directories` (under src/ when active) or
+  `root_directories` (always at project root, e.g. Vite's `public/`).
+- Dirs that already contain at least one file via FileSpec are auto-created
+  by the builder and don't need to be listed in `directories`.
 """
 
 from project_scaffold._dataclasses.file_spec import FileSpec
@@ -17,14 +22,7 @@ PROJECT_DIRECTORY_MAPPINGS: dict[str, Preset] = {
     'MCP': Preset(
         name        = 'MCP',
         description = 'Model Context Protocol server',
-        directories = [
-            'mcp_server',
-            'tools',
-            'services',
-            '_dataclasses',
-            '_errors',
-        ],
-        files = [
+        files       = [
             FileSpec('mcp_server/build_mcp.py',         examples.MCP_BUILD_EXAMPLE),
             FileSpec('mcp_server/lifespan.py',          examples.MCP_LIFESPAN_EXAMPLE),
             FileSpec('mcp_server/server.py',            examples.MCP_SERVER_EXAMPLE),
@@ -32,24 +30,15 @@ PROJECT_DIRECTORY_MAPPINGS: dict[str, Preset] = {
             FileSpec('services/_example_service.py',    examples.SERVICE_EXAMPLE),
             FileSpec('_dataclasses/_example.py',        examples.DATACLASS_EXAMPLE),
             FileSpec('_errors/_example.py',             examples.ERROR_EXAMPLE),
-            FileSpec('.gitignore',                      PYTHON),
+            FileSpec('.gitignore',                      PYTHON,                         at_root=True),
         ],
     ),
 
     'API': Preset(
         name        = 'API',
         description = 'FastAPI HTTP service',
-        directories = [
-            'api',
-            'api/build',
-            'api/routers',
-            'api/_dataclasses',
-            'api/_errors',
-            'api/_models',
-            'auth',
-            'services',
-        ],
-        files = [
+        directories = ['auth'],
+        files       = [
             FileSpec('main.py',                         examples.FASTAPI_MAIN_EXAMPLE),
             FileSpec('api/build/build_api.py',          examples.FASTAPI_BUILD_API_EXAMPLE),
             FileSpec('api/build/cors.py',               examples.FASTAPI_CORS_EXAMPLE),
@@ -60,47 +49,33 @@ PROJECT_DIRECTORY_MAPPINGS: dict[str, Preset] = {
             FileSpec('api/_errors/_example.py',         examples.ERROR_EXAMPLE),
             FileSpec('api/_models/_example.py',         examples.FASTAPI_MODEL_EXAMPLE),
             FileSpec('services/_example_service.py',    examples.SERVICE_EXAMPLE),
-            FileSpec('.gitignore',                      PYTHON),
+            FileSpec('.gitignore',                      PYTHON,                         at_root=True),
         ],
     ),
 
     'ENGINE': Preset(
-        name                = 'ENGINE',
-        description         = 'Pure-logic Python engine with tests',
-        directories         = [
-            '{inner}',
-            '{inner}/_dataclasses',
-            '{inner}/_errors',
-            'tests',
+        name        = 'ENGINE',
+        description = 'Pure-logic Python engine with tests',
+        files       = [
+            FileSpec('engine.py',                   examples.ENGINE_MAIN_EXAMPLE),
+            FileSpec('_dataclasses/_example.py',    examples.DATACLASS_EXAMPLE),
+            FileSpec('_errors/_example.py',         examples.ERROR_EXAMPLE),
+            FileSpec('tests/conftest.py',           examples.CONFTEST_EXAMPLE,      at_root=True),
+            FileSpec('pyproject.toml',              examples.PYPROJECT_TEMPLATE,    at_root=True),
+            FileSpec('.gitignore',                  PYTHON,                         at_root=True),
         ],
-        files = [
-            FileSpec('{inner}/engine.py',                   examples.ENGINE_MAIN_EXAMPLE),
-            FileSpec('{inner}/_dataclasses/_example.py',    examples.DATACLASS_EXAMPLE),
-            FileSpec('{inner}/_errors/_example.py',         examples.ERROR_EXAMPLE),
-            FileSpec('tests/conftest.py',                   examples.CONFTEST_EXAMPLE),
-            FileSpec('pyproject.toml',                      examples.PYPROJECT_ENGINE),
-            FileSpec('.gitignore',                          PYTHON),
-        ],
-        supports_src_layout = True,
     ),
 
     'PIP': Preset(
         name                = 'PIP',
         description         = 'Distributable pip package (src/ layout enforced)',
-        directories         = [
-            '{inner}',
-            '{inner}/_dataclasses',
-            '{inner}/_errors',
-            'tests',
+        files               = [
+            FileSpec('_dataclasses/_example.py',    examples.DATACLASS_EXAMPLE),
+            FileSpec('_errors/_example.py',         examples.ERROR_EXAMPLE),
+            FileSpec('tests/conftest.py',           examples.CONFTEST_EXAMPLE,      at_root=True),
+            FileSpec('pyproject.toml',              examples.PYPROJECT_TEMPLATE,    at_root=True),
+            FileSpec('.gitignore',                  PYTHON,                         at_root=True),
         ],
-        files = [
-            FileSpec('{inner}/_dataclasses/_example.py',    examples.DATACLASS_EXAMPLE),
-            FileSpec('{inner}/_errors/_example.py',         examples.ERROR_EXAMPLE),
-            FileSpec('tests/conftest.py',                   examples.CONFTEST_EXAMPLE),
-            FileSpec('pyproject.toml',                      examples.PYPROJECT_PIP),
-            FileSpec('.gitignore',                          PYTHON),
-        ],
-        supports_src_layout = True,
         requires_src_layout = True,
     ),
 
@@ -109,22 +84,17 @@ PROJECT_DIRECTORY_MAPPINGS: dict[str, Preset] = {
         description = 'Single-file utility script',
         files       = [
             FileSpec('main.py',     examples.SCRIPT_EXAMPLE),
-            FileSpec('.gitignore',  PYTHON),
+            FileSpec('.gitignore',  PYTHON,                 at_root=True),
         ],
     ),
 
     'FRONTEND': Preset(
-        name        = 'FRONTEND',
-        description = 'React/TypeScript frontend (post-Vite scaffold layout)',
-        directories = [
-            'src/components',
-            'src/hooks',
-            'src/lib',
-            'src/types',
-            'public',
-        ],
-        files = [
-            FileSpec('.gitignore', NODE),
+        name                = 'FRONTEND',
+        description         = 'React/TypeScript frontend (post-Vite scaffold layout)',
+        directories         = ['components', 'hooks', 'lib', 'types'],
+        root_directories    = ['public'],
+        files               = [
+            FileSpec('.gitignore',  NODE,   at_root=True),
         ],
     ),
 
