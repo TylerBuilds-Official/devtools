@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "developer-tools"
+version = "0.1.0"
+description = "Tyler's developer tooling collection"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+project-scaffold = "project_scaffold.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
