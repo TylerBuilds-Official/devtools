@@ -45,31 +45,3 @@ Thumbs.db
 *.log
 logs/
 """
-
-
-NODE: str = """\
-node_modules/
-dist/
-build/
-.cache/
-.parcel-cache/
-
-# IDEs
-.vscode/
-.idea/
-
-# Env
-.env
-.env.local
-.env.*.local
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-"""

@@ -9,12 +9,21 @@ Conventions:
   `root_directories` (always at project root, e.g. Vite's `public/`).
 - Dirs that already contain at least one file via FileSpec are auto-created
   by the builder and don't need to be listed in `directories`.
+
+Placeholders the builder substitutes (in both paths and content):
+- `{inner}`         → snake_case basename of the target path. Used by
+                      ENGINE/PIP to scope code under an inner package dir
+                      that hatchling/pip can ship as a distribution.
+- `{packages_path}` → `src/{inner}` if src/ is active, else `{inner}`.
+                      Used inside pyproject.toml's hatch packages config so
+                      `pip install -e .` actually installs the right thing
+                      regardless of the --no-src flag.
 """
 
 from project_scaffold._dataclasses.file_spec import FileSpec
 from project_scaffold._dataclasses.preset import Preset
 from project_scaffold.templates import examples
-from project_scaffold.templates.gitignore import NODE, PYTHON
+from project_scaffold.templates.gitignore import PYTHON
 
 
 PROJECT_DIRECTORY_MAPPINGS: dict[str, Preset] = {
@@ -57,12 +66,12 @@ PROJECT_DIRECTORY_MAPPINGS: dict[str, Preset] = {
         name        = 'ENGINE',
         description = 'Pure-logic Python engine with tests',
         files       = [
-            FileSpec('engine.py',                   examples.ENGINE_MAIN_EXAMPLE),
-            FileSpec('_dataclasses/_example.py',    examples.DATACLASS_EXAMPLE),
-            FileSpec('_errors/_example.py',         examples.ERROR_EXAMPLE),
-            FileSpec('tests/conftest.py',           examples.CONFTEST_EXAMPLE,      at_root=True),
-            FileSpec('pyproject.toml',              examples.PYPROJECT_TEMPLATE,    at_root=True),
-            FileSpec('.gitignore',                  PYTHON,                         at_root=True),
+            FileSpec('{inner}/engine.py',                   examples.ENGINE_MAIN_EXAMPLE),
+            FileSpec('{inner}/_dataclasses/_example.py',    examples.DATACLASS_EXAMPLE),
+            FileSpec('{inner}/_errors/_example.py',         examples.ERROR_EXAMPLE),
+            FileSpec('tests/conftest.py',                   examples.CONFTEST_EXAMPLE,      at_root=True),
+            FileSpec('pyproject.toml',                      examples.PYPROJECT_HATCHLING,   at_root=True),
+            FileSpec('.gitignore',                          PYTHON,                         at_root=True),
         ],
     ),
 
@@ -70,11 +79,11 @@ PROJECT_DIRECTORY_MAPPINGS: dict[str, Preset] = {
         name                = 'PIP',
         description         = 'Distributable pip package (src/ layout enforced)',
         files               = [
-            FileSpec('_dataclasses/_example.py',    examples.DATACLASS_EXAMPLE),
-            FileSpec('_errors/_example.py',         examples.ERROR_EXAMPLE),
-            FileSpec('tests/conftest.py',           examples.CONFTEST_EXAMPLE,      at_root=True),
-            FileSpec('pyproject.toml',              examples.PYPROJECT_TEMPLATE,    at_root=True),
-            FileSpec('.gitignore',                  PYTHON,                         at_root=True),
+            FileSpec('{inner}/_dataclasses/_example.py',    examples.DATACLASS_EXAMPLE),
+            FileSpec('{inner}/_errors/_example.py',         examples.ERROR_EXAMPLE),
+            FileSpec('tests/conftest.py',                   examples.CONFTEST_EXAMPLE,      at_root=True),
+            FileSpec('pyproject.toml',                      examples.PYPROJECT_HATCHLING,   at_root=True),
+            FileSpec('.gitignore',                          PYTHON,                         at_root=True),
         ],
         requires_src_layout = True,
     ),
@@ -90,12 +99,9 @@ PROJECT_DIRECTORY_MAPPINGS: dict[str, Preset] = {
 
     'FRONTEND': Preset(
         name                = 'FRONTEND',
-        description         = 'React/TypeScript frontend (post-Vite scaffold layout)',
+        description         = 'React/TypeScript folder structure (post-Vite -- Vite supplies .gitignore, package.json, index.html, etc.)',
         directories         = ['components', 'hooks', 'lib', 'types'],
         root_directories    = ['public'],
-        files               = [
-            FileSpec('.gitignore',  NODE,   at_root=True),
-        ],
     ),
 
 }

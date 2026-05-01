@@ -7,6 +7,11 @@ Usage:
 
 Preset names are case-insensitive on input. src/ layout is the default for all
 presets — pass --no-src to opt out (PIP enforces src/ and rejects the flag).
+
+Exit codes:
+    0 — success
+    1 — known scaffold failure (target missing, file conflict, etc.)
+    2 — unexpected failure (permission denied, disk full, etc.)
 """
 
 import argparse
@@ -35,6 +40,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"error: {e}", file=sys.stderr)
 
         return 1
+    except Exception as e:
+        print(f"unexpected error ({type(e).__name__}): {e}", file=sys.stderr)
+
+        return 2
 
     print(f"scaffolded '{args.preset.upper()}' at {plan.target_root}")
     print(f"  {len(plan.directories)} directories, {len(plan.files)} files")

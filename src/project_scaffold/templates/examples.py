@@ -2,6 +2,9 @@
 
 Each constant is a minimal placeholder demonstrating Tyler's conventions
 (spacing, type hints, file structure) so new projects don't drift.
+
+Strings may contain `{inner}` and `{packages_path}` placeholders, which the
+builder substitutes at scaffold time.
 """
 
 
@@ -34,7 +37,7 @@ class ExampleService:
 
 
 MCP_TOOL_EXAMPLE: str = '''\
-"""Example MCP tool — replace with a real tool"""
+"""Example MCP tool - replace with a real tool"""
 
 
 async def example_tool(query: str) -> dict:
@@ -150,7 +153,7 @@ def add_cors(app: FastAPI) -> None:
 
 
 FASTAPI_LIFESPAN_EXAMPLE: str = '''\
-"""Application lifespan hooks — owns shared resources for the process lifetime"""
+"""Application lifespan hooks - owns shared resources for the process lifetime"""
 
 import logging
 
@@ -176,7 +179,7 @@ async def lifespan(app: FastAPI):
 
 
 FASTAPI_ROUTE_MANAGER_EXAMPLE: str = '''\
-"""RouteManager — central registry for every APIRouter mounted on the app.
+"""RouteManager - central registry for every APIRouter mounted on the app.
 
 Adding a new router is two lines: import it at the top of this file and
 append it to `self.routes` in __init__.
@@ -219,7 +222,7 @@ class RouteManager:
 
 
 FASTAPI_ROUTER_EXAMPLE: str = '''\
-"""Example FastAPI router — replace with a real router"""
+"""Example FastAPI router - replace with a real router"""
 
 from fastapi import APIRouter
 
@@ -248,7 +251,7 @@ class ExampleModel(BaseModel):
 
 
 ENGINE_MAIN_EXAMPLE: str = '''\
-"""Engine entry point — replace with the real engine class"""
+"""Engine entry point - replace with the real engine class"""
 
 
 class Engine:
@@ -286,10 +289,10 @@ import pytest
 '''
 
 
-PYPROJECT_TEMPLATE: str = '''\
+PYPROJECT_HATCHLING: str = '''\
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "REPLACE_ME"
@@ -298,6 +301,13 @@ description = ""
 requires-python = ">=3.11"
 dependencies = []
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "pytest-cov>=4.0",
+    "pytest-mock>=3.12",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["{packages_path}"]
 '''
