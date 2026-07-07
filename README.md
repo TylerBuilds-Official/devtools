@@ -1,8 +1,18 @@
 # Developer Tools
 
-Personal developer tooling collection.
+The personal tooling I reach for across projects. Two pieces live here: `project_scaffold`, a preset-driven CLI that lays down my standard project structure, and a small MCP server that hands a few of my workflows to AI agents.
 
 ## Tools
+
+### `mcp_server`
+
+An MCP server that exposes a few day-to-day utilities to Claude:
+
+- `scaffold_project` - drives `project_scaffold` (documented below) from a conversation
+- `get_skills` / `get_skill` - lists and serves my local skill files
+- `claude_tmp_control` - manages the scratch directory Claude and I use to hand files back and forth (path is configured in the source)
+
+Run `src/mcp_server/run.py` and register the command with your MCP client.
 
 ### `project_scaffold`
 
@@ -24,7 +34,7 @@ project-scaffold MCP ./my-new-mcp
 ```
 
 The tool requires the target directory to already exist (safer than
-auto-creating). It runs a preflight pass before any disk writes — if any
+auto-creating). It runs a preflight pass before any disk writes - if any
 target file already exists, the scaffold aborts and touches nothing.
 
 Preset names are case-insensitive on input. **`src/` layout is the default for
@@ -33,17 +43,17 @@ root regardless.
 
 #### Flags
 
-- `--no-src` — opt out of `src/` layout; lay code at project root instead.
+- `--no-src` - opt out of `src/` layout; lay code at project root instead.
   `PIP` rejects this flag.
-- `--top-level-meta` — place `dataclasses/` and `errors/` at the project root
+- `--top-level-meta` - place `dataclasses/` and `errors/` at the project root
   with no underscore prefix, instead of `_dataclasses/` / `_errors/` nested
   inside modular dirs.
 
 #### Exit codes
 
-- `0` — success
-- `1` — known scaffold failure (target missing, file conflict, invalid flag, etc.)
-- `2` — unexpected failure (permission denied, disk full, etc.)
+- `0` - success
+- `1` - known scaffold failure (target missing, file conflict, invalid flag, etc.)
+- `2` - unexpected failure (permission denied, disk full, etc.)
 
 #### Presets
 
@@ -61,13 +71,13 @@ named after the target directory (snake-cased), and a hatchling
 `pyproject.toml` is generated with the correct `packages = [...]` path. The
 other presets put code directly under `src/` with no inner package.
 
-`FRONTEND` is designed to layer on top of a Vite-scaffolded project — it
+`FRONTEND` is designed to layer on top of a Vite-scaffolded project - it
 adds folder structure only (no `.gitignore`, `package.json`, `index.html`,
 etc., because Vite already provides those). See the FRONTEND section below.
 
 #### Layouts
 
-##### `MCP` — `mkdir my-mcp && project-scaffold MCP my-mcp`
+##### `MCP` - `mkdir my-mcp && project-scaffold MCP my-mcp`
 
 ```
 my-mcp/
@@ -83,7 +93,7 @@ my-mcp/
     └── _errors/_example.py
 ```
 
-##### `API` — `mkdir my-api && project-scaffold API my-api`
+##### `API` - `mkdir my-api && project-scaffold API my-api`
 
 ```
 my-api/
@@ -105,7 +115,7 @@ my-api/
     └── services/_example_service.py
 ```
 
-##### `ENGINE` — `mkdir scope-classification && project-scaffold ENGINE scope-classification`
+##### `ENGINE` - `mkdir scope-classification && project-scaffold ENGINE scope-classification`
 
 ```
 scope-classification/
@@ -119,7 +129,7 @@ scope-classification/
         └── _errors/_example.py
 ```
 
-##### `PIP` — `mkdir my-package && project-scaffold PIP my-package`
+##### `PIP` - `mkdir my-package && project-scaffold PIP my-package`
 
 ```
 my-package/
@@ -140,10 +150,10 @@ target/
 └── src/main.py
 ```
 
-##### `FRONTEND` — adds folder structure to an existing Vite project
+##### `FRONTEND` - adds folder structure to an existing Vite project
 
 Run `npm create vite@latest` first, then point `project-scaffold FRONTEND` at
-the resulting directory. The preset only adds empty placeholder folders —
+the resulting directory. The preset only adds empty placeholder folders -
 it doesn't overwrite Vite's `.gitignore`, `package.json`, `index.html`, or
 anything else.
 
@@ -170,7 +180,7 @@ my-app/
 
 #### Flag effects on layout
 
-`--no-src` (any preset except `PIP`) — drops the `src/` wrapper. For
+`--no-src` (any preset except `PIP`) - drops the `src/` wrapper. For
 `ENGINE`/`PIP`-shaped layouts, the inner package moves to the project root and
 the generated `pyproject.toml` adapts: `packages = ["my_package"]` instead of
 `packages = ["src/my_package"]`.
@@ -188,7 +198,7 @@ my-engine/                            my-engine/
         └── _errors/...
 ```
 
-`--top-level-meta` — lifts `_dataclasses/` and `_errors/` out of any nesting,
+`--top-level-meta` - lifts `_dataclasses/` and `_errors/` out of any nesting,
 renames them with no underscore prefix, and places them at the actual project
 root (above `src/`):
 
@@ -212,7 +222,7 @@ The target directory's basename becomes the inner Python package name:
 
 - `mkdir scope-classification` → inner package `scope_classification`
 - `mkdir my-cool-engine` → inner package `my_cool_engine`
-- `mkdir MyProject` → inner package `myproject` *(camelCase isn't split — use
+- `mkdir MyProject` → inner package `myproject` *(camelCase isn't split - use
   kebab-case for clean names)*
 
 The `pyproject.toml` `name` field is left as `REPLACE_ME` for you to fill in
@@ -223,15 +233,15 @@ with the distribution name (typically kebab-case, e.g. `scope-classification`).
 Edit `src/project_scaffold/directory_mappings.py`. Each preset is a `Preset`
 dataclass declaring:
 
-- `directories: list[str]` — empty placeholder dirs (under `src/` when active).
+- `directories: list[str]` - empty placeholder dirs (under `src/` when active).
   Dirs that already contain at least one `FileSpec` are auto-created and don't
   need to be listed here.
-- `root_directories: list[str]` — empty placeholder dirs always at project
+- `root_directories: list[str]` - empty placeholder dirs always at project
   root (e.g. Vite's `public/`).
-- `files: list[FileSpec]` — each `FileSpec` has `relative_path`, `content`,
+- `files: list[FileSpec]` - each `FileSpec` has `relative_path`, `content`,
   and `at_root: bool`. Configs (`.gitignore`, `pyproject.toml`) get
   `at_root=True`.
-- `requires_src_layout: bool` — set `True` to forbid `--no-src` (only `PIP`
+- `requires_src_layout: bool` - set `True` to forbid `--no-src` (only `PIP`
   uses this).
 
 Reusable file content lives in `templates/examples.py`. Add a new
@@ -240,10 +250,10 @@ Reusable file content lives in `templates/examples.py`. Add a new
 Path strings and content strings both support these placeholders, substituted
 at scaffold time:
 
-- `{inner}` — snake_cased basename of the target path. Use to scope code
+- `{inner}` - snake_cased basename of the target path. Use to scope code
   under an inner package dir.
-- `{packages_path}` — `src/{inner}` if `src/` is active, else `{inner}`.
+- `{packages_path}` - `src/{inner}` if `src/` is active, else `{inner}`.
   Use inside `pyproject.toml` so distribution config tracks the layout.
 
-The builder handles path resolution and flag transforms — no changes to
+The builder handles path resolution and flag transforms - no changes to
 `builder.py` needed for new presets.
